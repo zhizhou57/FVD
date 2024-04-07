@@ -32,8 +32,7 @@ print(score)
 ```
 
 # todo
-* Standardize the video frame rate for FVD computation (via interpolation) to ensure consistent motion dynamics across frames. 
-* support StyleGAN-V
+* Standardize the video frame rate for FVD computation (via interpolation) to ensure consistent motion dynamics across frames.
 
 # Citation
 ```

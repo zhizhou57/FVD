@@ -14,13 +14,15 @@ import random
 from PIL import Image, ImageSequence
 from decord import VideoReader
 
-def load_video(video_path: Union[str, Path], num_frames: int = 16, return_tensor: bool = True) -> Union[np.ndarray, torch.Tensor]:
+
+def load_video(video_path: Union[str, Path], num_frames: int = 16, return_tensor: bool = True,
+               sample: str = "middle") -> Union[np.ndarray, torch.Tensor]:
     """
     Load a video from a given path, change its fps and resolution if needed
     :param video_path (str): The video file path to be loaded.
-    :param target_fps (int): The target fps of the video
-    :param target_resolution Tuple[int]: The target resolution of the video, (default is (224, 224))
     :param num_frames (int): The number of frames to be loaded
+    :param return_tensor (bool): return torch tensor if True
+    :param sample: frame sample method
     :return frames (np.ndarray):
     """
     if isinstance(video_path, Path):
@@ -46,7 +48,7 @@ def load_video(video_path: Union[str, Path], num_frames: int = 16, return_tensor
     frames = buffer
     if num_frames:
         frame_indices = get_frame_indices(
-            num_frames, len(frames), sample="middle"
+            num_frames, len(frames), sample=sample
         )
         frames = frames[frame_indices]
 
@@ -67,12 +69,14 @@ def get_frame_indices(num_frames, vlen, sample='rand', fix_start=None):
     :return: frames starting from fix_start, random or middle frames
     """
     assert num_frames <= vlen
-    if sample in ["rand", "middle"]:
+    if sample in ["rand", "middle", "start"]:
         if sample == "rand":
             intervals = range(0, vlen, num_frames)
             start = random.choice(intervals)
         elif sample == "middle":
             start = vlen // 2 - 1
+        elif sample == "start":
+            start = 0
         else:
             raise NotImplementedError("no such sample method")
         frame_indices = [start + i for i in range(num_frames)]

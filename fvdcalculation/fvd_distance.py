@@ -16,8 +16,9 @@ Modified from https://github.com/songweige/TATS/blob/main/tats/fvd/fvd.py
 """
 
 class FVDCalculation:
-    def __init__(self, method: str = 'stylegan'):
+    def __init__(self, method: str = 'stylegan', frame_sample_strategy: str = 'random'):
         self.method = method
+        self.frame_sample_strategy = frame_sample_strategy
         self.max_batch = 16
         self.target_resolution = (224, 224)
 
@@ -33,13 +34,13 @@ class FVDCalculation:
 
         real_videos = []
         for video_path in tqdm(real_path_list, desc="loading real videos"):
-            video = load_video(video_path)
+            video = load_video(video_path, sample=self.frame_sample_strategy)
             real_videos.append(video)
         real_videos = torch.stack(real_videos)
 
         generated_videos = []
         for video_path in tqdm(generated_path_list, desc="loading generated videos"):
-            video = load_video(video_path)
+            video = load_video(video_path, sample=self.frame_sample_strategy)
             generated_videos.append(video)
         generated_videos = torch.stack(generated_videos)
 
@@ -103,7 +104,7 @@ class FVDCalculation:
     def _get_logits(self, i3d_model, videos, device):
         with torch.no_grad():
             logits = []
-            for i in tqdm(range(0, videos.shape[0], self.max_batch)):
+            for i in range(0, videos.shape[0], self.max_batch):
                 batch = videos[i:i + self.max_batch]
                 batch = self._preprocess(batch, (224, 224)).to(device)
                 logits.append(i3d_model(batch))

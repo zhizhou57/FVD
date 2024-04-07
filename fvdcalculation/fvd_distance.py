@@ -2,6 +2,7 @@
 # @Time    : 2024/4/2 16:41
 # @Author  : yes_liu
 # @File    : fvd_distance.py
+import math
 from pathlib import Path
 from typing import List, Union
 import torch
@@ -16,11 +17,14 @@ Modified from https://github.com/songweige/TATS/blob/main/tats/fvd/fvd.py
 """
 
 class FVDCalculation:
-    def __init__(self, method: str = 'stylegan', frame_sample_strategy: str = 'random'):
+    def __init__(self, method: str = 'videogpt', frame_sample_strategy: str = 'middle'):
         self.method = method
         self.frame_sample_strategy = frame_sample_strategy
         self.max_batch = 16
-        self.target_resolution = (224, 224)
+        if method == 'videogpt':
+            self.target_resolution = (224, 224)
+        elif method == 'stylegan':
+            self.target_resolution = (128, 128)
 
     def calculate_fvd_by_video_path(self, real_path_list: Union[List[str], List[Path]], generated_path_list: Union[List[str], List[Path]]):
         """
@@ -49,27 +53,49 @@ class FVDCalculation:
         return fvd.detach().cpu().numpy()
 
     def _load_model(self, device: torch.device, num_classes: int = 400):
-        if self.method == 'stylegan':
+        if self.method == 'videogpt':
             model = InceptionI3d(num_classes, in_channels=3).to(device)
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            i3d_path = os.path.join(current_dir, "model", 'i3d_pretrained_400.pt')
+            i3d_path = os.path.join(current_dir, "model", "videogpt", "i3d_pretrained_400.pt")
             model.load_state_dict(torch.load(i3d_path, map_location=device))
             model.eval()
+        elif self.method == 'stylegan':
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            detector_kwargs = dict(rescale=False, resize=True, return_features=True)
+            with open(os.path.join(current_dir, "model", 'stylegan', "i3d_torchscript.pt"), 'rb') as f:
+                detector = torch.jit.load(f).eval().to(device)
+            return lambda x: detector(x, **detector_kwargs)
         else:
-            model = None
+            raise NotImplementedError
         return model
 
-    def _preprocess(self, videos: torch.Tensor, target_resolution: tuple = (224, 224)):
+    def _preprocess(self, videos: torch.Tensor, target_resolution: tuple = (224, 224), method='videogpt'):
         """
         Resize video to target resolution by interpolation and normalize to [-1, 1]
         :param videos: videos in {0, ..., 255} as np.uint8 array
-        :param target_resolution:
         :return: resized，scaled videos
         """
         assert videos.ndim == 5, "video must be of shape [batch, frames, channels, height, width]"
         b, t, c, h, w = videos.shape
         all_frames = videos.float().flatten(end_dim=1)  # (b * t, c, h, w)
-        resized_videos = F.interpolate(all_frames, size=target_resolution, mode='bilinear', align_corners=False)
+        if method == 'videogpt':
+            resized_videos = F.interpolate(all_frames, size=target_resolution, mode='bilinear', align_corners=False)
+        elif method == 'stylegan':
+            # scale shorter side to resolution
+            scale = target_resolution[0] / min(h, w)
+            if h < w:
+                target_size = (target_resolution[0], math.ceil(w * scale))
+            else:
+                target_size = (math.ceil(h * scale), target_resolution[0])
+            resized_videos = F.interpolate(all_frames, size=target_size, mode='bilinear', align_corners=False)
+
+            # center crop
+            _, c, h, w = resized_videos.shape
+            w_start = (w - target_resolution[0]) // 2
+            h_start = (h - target_resolution[0]) // 2
+            resized_videos = resized_videos[:, :, h_start:h_start + target_resolution[0], w_start:w_start + target_resolution[1]]
+        else:
+            raise NotImplementedError("no such method: {}".format(method))
         resized_videos = resized_videos.view(b, t, c, *target_resolution)
         output_videos = resized_videos.transpose(1, 2).contiguous()  # (b, c, t, *)
         scaled_videos = 2. * output_videos / 255. - 1
@@ -106,13 +132,14 @@ class FVDCalculation:
             logits = []
             for i in range(0, videos.shape[0], self.max_batch):
                 batch = videos[i:i + self.max_batch]
-                batch = self._preprocess(batch, (224, 224)).to(device)
+                batch = self._preprocess(batch, self.target_resolution, method=self.method)
+                batch = batch.to(device)
                 logits.append(i3d_model(batch))
             logits = torch.cat(logits, dim=0)
             return logits
 
     def _compute_fvd_between_video(self, i3d_model, real, samples, device):
-        # real, samples are (N, T, H, W, C) tensors in torch.float
+        # real, samples are (N, T, C, H, W) tensors in torch.float
         first_embed = self._get_logits(i3d_model, real, device)
         second_embed = self._get_logits(i3d_model, samples, device)
 

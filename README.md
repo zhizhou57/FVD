@@ -1,16 +1,18 @@
 # FVD Calculation
-We have implemented the calculation of FVD using PyTorch, which is adapted from VideoGPT and StyleGAN-V .
+We have implemented the calculation of FVD using PyTorch, adapted from VideoGPT and StyleGAN-V.
 
-This repo handle several issues present in other FVD calculation projects and establishes a unified standard for FVD computation:
-* Video Data Preprocessing: Frames are resized before inputting into the model. The unified input dimensions are [number_of_videos, number_of_frames, width, height, channels]. 
+This repo handle several issues:
+* Video Data Preprocessing: Frames are **resized** before inputting into the model. 
 
-* Frame Sampling Strategy: We employ a continuous sampling strategy, sampling fixed frames throughout the video, offering options for sampling at the random, beginning or middle positions of the video.
+* Frame Sampling Strategy: We employ a continuous **frame sampling strategy**, sampling fixed frames throughout the video, offering options for sampling at the random, beginning or middle positions of the video.
 
-* Optimized Computation Strategy: Ensuring precision in computing trace of matrix(compared to StyleGAN-V), we batch-process videos and provide options for CPU-based computation to avoid GPU memory constraints during preprocessing.
+* Comparison between VideoGPT and StyleGAN
 
 # FVD difference between VideoGPT and StyleGAN
-* VideoGPT resize each frame to (224, 224), StyleGAN resize each frame while keeping the aspect ratio, then do center cropping 
+* VideoGPT resize each frame to (224, 224), StyleGAN resize each frame to (128, 128) while keeping the aspect ratio, then do center cropping 
 * When computing trace in FVD, VideoGPT use Trace(G + R) - 2 * Trace(sqrt(R * G)) instead of Trace((G + R) - 2 * (sqrt(R * G))) in StyleGAN. The latter may lead to unstable result due to calculating trace of a large matrix. 
+* Different pretrained i3d model
+* The error is around 10%.
 
 # Example
 ```python

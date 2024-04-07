@@ -1,5 +1,5 @@
 # FVD
-We have implemented the calculation of FVD using PyTorch, which is adapted from TATS and StyleGAN-V .
+We have implemented the calculation of FVD using PyTorch, which is adapted from VideoGPT and StyleGAN-V .
 
 
 This repo handle several issues present in other FVD calculation projects and establishes a unified standard for FVD computation:
@@ -29,3 +29,22 @@ print(score)
 # todo
 * Standardize the video frame rate for FVD computation (via interpolation) to ensure consistent motion dynamics across frames. 
 * support StyleGAN-V
+
+# Citation
+```
+@misc{yan2021videogpt,
+      title={VideoGPT: Video Generation using VQ-VAE and Transformers}, 
+      author={Wilson Yan and Yunzhi Zhang and Pieter Abbeel and Aravind Srinivas},
+      year={2021},
+      eprint={2104.10157},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@misc{stylegan_v,
+    title={StyleGAN-V: A Continuous Video Generator with the Price, Image Quality and Perks of StyleGAN2},
+    author={Ivan Skorokhodov and Sergey Tulyakov and Mohamed Elhoseiny},
+    journal={arXiv preprint arXiv:2112.14683},
+    year={2021}
+}
+```

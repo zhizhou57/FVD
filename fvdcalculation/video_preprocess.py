@@ -59,7 +59,7 @@ def load_video(video_path: Union[str, Path], num_frames: int = 16, return_tensor
     return frames
 
 
-def get_frame_indices(num_frames, vlen, sample='rand', fix_start=None):
+def get_frame_indices(num_frames, vlen, sample='random', fix_start=None):
     """
     sample sequence frames from video
     :param num_frames: number of frames to sample
@@ -69,9 +69,9 @@ def get_frame_indices(num_frames, vlen, sample='rand', fix_start=None):
     :return: frames starting from fix_start, random or middle frames
     """
     assert num_frames <= vlen
-    if sample in ["rand", "middle", "start"]:
-        if sample == "rand":
-            intervals = range(0, vlen, num_frames)
+    if sample in ["random", "middle", "start"]:
+        if sample == "random":
+            intervals = range(0, vlen - num_frames + 1, num_frames)
             start = random.choice(intervals)
         elif sample == "middle":
             start = vlen // 2 - 1

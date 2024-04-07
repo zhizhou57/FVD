@@ -2,16 +2,22 @@
 # @Time    : 2024/4/7 10:42
 # @Author  : 
 # @File    : fvd_test.py.py
+import torch
+
 from fvdcalculation import FVDCalculation
 from pathlib import Path
 
-fvd = FVDCalculation(frame_sample_strategy="random")
+fvd_videogpt = FVDCalculation(method="videogpt")
+fvd_stylegan = FVDCalculation(method="stylegan")
 
-generated_videos_folder = Path("/home/generated_videos")
-real_videos_folder = Path("/home/real_videos")
+generated_videos_folder = Path("/home/xxx")
+real_videos_folder = Path("/home/yyy")
 
 videos_list1 = list(real_videos_folder.glob("*.avi"))
 videos_list2 = list(generated_videos_folder.glob("*.mp4"))
 
-score = fvd.calculate_fvd_by_video_path(videos_list1, videos_list2)
-print(score)
+score_videogpt = fvd_videogpt.calculate_fvd_by_video_path(videos_list1, videos_list2)
+print(score_videogpt)
+score_stylegan = fvd_stylegan.calculate_fvd_by_video_path(videos_list1, videos_list2)
+print(score_stylegan)
+

@@ -1,5 +1,5 @@
-# FVD Calculation
-We have implemented the calculation of FVD using PyTorch, adapted from VideoGPT and StyleGAN-V.
+# FVD Calculation library
+We have reimplemented the calculation of FVD using PyTorch, adapted from VideoGPT and StyleGAN-V.
 
 This repo handle several issues:
 * Video Data Preprocessing: Frames are **resized** before inputting into the model. 
@@ -15,20 +15,29 @@ This repo handle several issues:
 * The error is around 10%.
 
 # Example
+install package and requirements
+```shell
+pip install dist/fvdcal-1.0-py3-none-any.whl
+pip install decord torch
+```
+
 ```python
-from fvdcalculation import FVDCalculation
+from fvdcal import FVDCalculation
 from pathlib import Path
 
-fvd = FVDCalculation(frame_sample_strategy="random")
+fvd_videogpt = FVDCalculation(method="videogpt")
+fvd_stylegan = FVDCalculation(method="stylegan")
 
-generated_videos_folder = Path("/home/generated_videos")
-real_videos_folder = Path("/home/real_videos")
+generated_videos_folder = Path("/home/xxx")
+real_videos_folder = Path("/home/yyy")
 
 videos_list1 = list(real_videos_folder.glob("*.avi"))
 videos_list2 = list(generated_videos_folder.glob("*.mp4"))
 
-score = fvd.calculate_fvd_by_video_path(videos_list1, videos_list2)
-print(score)
+score_videogpt = fvd_videogpt.calculate_fvd_by_video_path(videos_list1, videos_list2)
+print(score_videogpt)
+score_stylegan = fvd_stylegan.calculate_fvd_by_video_path(videos_list1, videos_list2)
+print(score_stylegan)
 ```
 
 # todo

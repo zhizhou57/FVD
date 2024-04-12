@@ -26,7 +26,7 @@ class FVDCalculation:
         elif method == 'stylegan':
             self.target_resolution = (128, 128)
 
-    def calculate_fvd_by_video_path(self, real_path_list: Union[List[str], List[Path]], generated_path_list: Union[List[str], List[Path]]):
+    def calculate_fvd_by_video_path(self, real_path_list: Union[List[str], List[Path]], generated_path_list: Union[List[str], List[Path]], model_path = "model"):
         """
         calculate FVD by videos path list
         :param real_path_list: list of real videos path
@@ -34,7 +34,7 @@ class FVDCalculation:
         :return: fvd score
         """
         device = torch.device("cuda" if torch.cuda.is_available() else 'cpu')
-        model = self._load_model(device)
+        model = self._load_model(model_path, device)
 
         real_videos = []
         for video_path in tqdm(real_path_list, desc="loading real videos"):
@@ -52,17 +52,15 @@ class FVDCalculation:
 
         return fvd.detach().cpu().numpy()
 
-    def _load_model(self, device: torch.device, num_classes: int = 400):
+    def _load_model(self, model_path: str, device: torch.device, num_classes: int = 400):
         if self.method == 'videogpt':
             model = InceptionI3d(num_classes, in_channels=3).to(device)
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            i3d_path = os.path.join(current_dir, "model", "videogpt", "i3d_pretrained_400.pt")
+            i3d_path = os.path.join(model_path, "videogpt", "i3d_pretrained_400.pt")
             model.load_state_dict(torch.load(i3d_path, map_location=device))
             model.eval()
         elif self.method == 'stylegan':
-            current_dir = os.path.dirname(os.path.abspath(__file__))
             detector_kwargs = dict(rescale=False, resize=True, return_features=True)
-            with open(os.path.join(current_dir, "model", 'stylegan', "i3d_torchscript.pt"), 'rb') as f:
+            with open(os.path.join(model_path, 'stylegan', "i3d_torchscript.pt"), 'rb') as f:
                 detector = torch.jit.load(f).eval().to(device)
             return lambda x: detector(x, **detector_kwargs)
         else:

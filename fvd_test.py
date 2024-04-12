@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2024/4/7 10:42
-# @Author  : 
+# @Author  : yesliu
 # @File    : fvd_test.py.py
-import torch
 
-from fvdcalculation import FVDCalculation
+from fvdcal import FVDCalculation
 from pathlib import Path
 
 fvd_videogpt = FVDCalculation(method="videogpt")
